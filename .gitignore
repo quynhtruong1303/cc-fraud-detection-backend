@@ -1,1 +1,19 @@
-git 
+# Dependencies
+node_modules/
+
+# Environment variables
+*.env
+
+# Python
+__pycache__/
+*.pkl
+*.pyc
+.venv/
+venv/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# OS files
+.DS_Store
+Thumbs.db
