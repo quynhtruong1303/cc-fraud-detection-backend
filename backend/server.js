@@ -4,20 +4,24 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 
-// import transaction routes handler
+// import route handlers
 const transactionRoutes = require('./routes/transactions');
+const analyticsRoutes = require('./routes/analytics');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// allow cross-origin requests (for REACT frontend)
+// allow cross-origin requests (for React frontend)
 app.use(cors());
 
-// parse incomeing JSON request bodies
+// parse incoming JSON request bodies
 app.use(express.json());
 
-// handles all requests to /api/transactions
+// raw historical data endpoints
 app.use('/api/transactions', transactionRoutes);
+
+// aggregated analytics endpoints for the dashboard
+app.use('/api/analytics', analyticsRoutes);
 
 // start the server
 app.listen(PORT, () => {
