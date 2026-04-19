@@ -1,55 +1,58 @@
-## Setup
+# Fraud Detection Backend
+
+## Structure
+
+```
+fraud-detection-backend/
+  backend/        ← Express API
+  data-mining/    ← Clustering & data analysis
+```
+
+## Backend Setup
 
 ```bash
 cd backend
 npm install
 ```
 
-Create a `.env` file in the `backend/` folder:
+Create a `.env` file in `backend/`:
 ```
 PORT=3000
+SUPABASE_URL=your_supabase_url
+SUPABASE_SERVICE_KEY=your_service_role_key
 ```
 
-## Running the Server
-
 ```bash
-# Development (auto-restarts on save)
-npm run dev
-
-# Production
-npm start
+npm run dev    # development (auto-restart)
+npm start      # production
 ```
 
 ## API Endpoints
 
-### POST `/api/transactions`
+### Transactions (raw historical data)
 
-Receives a transaction and returns a response.
+| Method | Endpoint | Description |
+|---|---|---|
+| GET | `/api/transactions/simple` | Fetch from transactions_simple (paginated) |
+| GET | `/api/transactions/detailed` | Fetch from transactions_detailed (paginated) |
 
-**Request body:**
-```json
-{
-  "amount": 250.00,
-  "merchant": "Amazon",
-  "card_last4": "4242"
-}
+**Pagination query params:**
+```
+?page=1&limit=100
 ```
 
-**Response:**
-```json
-{
-  "message": "Transaction received",
-  "data": {
-    "amount": 250.00,
-    "merchant": "Amazon",
-    "card_last4": "4242"
-  }
-}
-```
+### Analytics (dashboard)
+
+| Method | Endpoint | Description |
+|---|---|---|
+| GET | `/api/analytics/summary` | Fraud rate, total transactions, total amount |
+| GET | `/api/analytics/by-category` | Fraud breakdown by merchant category |
+| GET | `/api/analytics/by-location` | Fraud breakdown by city/state |
+| GET | `/api/analytics/clusters` | Cluster results from data-mining notebooks |
+
+> Analytics endpoints return `501 Coming soon` until Jessica completes the data-mining notebooks.
 
 ## Tech Stack
-- Node.js
-- Express.js
-- dotenv
-- cors
-- nodemon (dev)
+- Node.js, Express.js
+- Supabase (PostgreSQL)
+- dotenv, cors, nodemon
