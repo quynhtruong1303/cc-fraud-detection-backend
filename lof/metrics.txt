@@ -1,0 +1,12 @@
+LOF Fraud Detection Results
+========================================
+training_rows_normal_only=8819
+test_rows=4334
+fraud_rate=0.127665
+contamination=0.127695
+precision=0.481323
+recall=0.815552
+f1=0.605369
+roc_auc=0.897946
+pr_auc=0.630967
+confusion_matrix=[[3295, 486], [102, 451]]

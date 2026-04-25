@@ -1,0 +1,21 @@
+Transfer-Safe LOF Results on fraud_data.csv
+===========================================
+train_rows=8666
+validation_rows=2889
+test_rows=2889
+train_normal_rows=7560
+best_n_neighbors=25
+best_contamination=0.030000
+selected_threshold=-0.033324
+threshold=-0.033324
+precision=0.698718
+recall=0.886179
+f1=0.781362
+f2=0.841049
+roc_auc=0.955628
+pr_auc=0.821261
+false_negatives=42
+false_positives=141
+true_negatives=2379
+true_positives=327
+alert_rate=0.161994
