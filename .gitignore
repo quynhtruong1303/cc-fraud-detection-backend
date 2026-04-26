@@ -17,3 +17,7 @@ venv/
 # OS files
 .DS_Store
 Thumbs.db
+
+# Matplotlib runtime cache
+mpl_config/
+cache/fontconfig/
