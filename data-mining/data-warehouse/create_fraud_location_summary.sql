@@ -29,3 +29,7 @@ GROUP BY
     city
 ORDER BY
     fraud_rate DESC;
+
+ALTER TABLE public.fraud_location_summary
+ADD CONSTRAINT pk_fraud_location_summary
+PRIMARY KEY (state, city);

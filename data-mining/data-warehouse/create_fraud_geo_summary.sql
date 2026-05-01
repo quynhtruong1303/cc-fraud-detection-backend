@@ -36,3 +36,7 @@ GROUP BY
     long
 ORDER BY
     fraud_rate DESC;
+
+ALTER TABLE public.fraud_geo_summary
+ADD CONSTRAINT pk_fraud_geo_summary
+PRIMARY KEY (state, city, lat, long);

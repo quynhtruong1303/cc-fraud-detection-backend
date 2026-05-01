@@ -3,9 +3,13 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.cluster import AgglomerativeClustering
 from scipy.cluster.hierarchy import dendrogram, linkage
 import matplotlib.pyplot as plt
-from utils import supabase_client
+import sys
+import os
+PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+sys.path.insert(0, PROJECT_ROOT)
+from utils.supabase_client import supabase
 
-response = supabase_client.supabase.table("fraud_category_summary").select("*").execute()
+response = supabase.table("fraud_category_summary").select("*").execute()
 
 fraud_category_summary = response.data
 
@@ -30,31 +34,16 @@ scaler = StandardScaler()
 X_scaled = scaler.fit_transform(features)
 
 # Create linkage matrix for dendrogram
-Z_single = linkage(X_scaled, method="single")
+Z = linkage(X_scaled, method="ward")
 
 plt.figure(figsize=(12, 6))
 dendrogram(
-    Z_single,
+    Z,
     labels=(df["category"]).values,
     leaf_rotation=90
 )
-plt.title("Hierarchical Clustering of Fraud by Category - Single Linkage")
+plt.title("Hierarchical Clustering of Fraud by Category - Ward Linkage")
 plt.xlabel("Category")
 plt.ylabel("Distance")
 plt.tight_layout()
-plt.show()
-
-# Create linkage matrix for dendrogram
-Z_complete = linkage(X_scaled, method="complete")
-
-plt.figure(figsize=(12, 6))
-dendrogram(
-    Z_complete,
-    labels=(df["category"]).values,
-    leaf_rotation=90
-)
-plt.title("Hierarchical Clustering of Fraud by Category - Complete Linkage")
-plt.xlabel("Category")
-plt.ylabel("Distance")
-plt.tight_layout()
-plt.show()
+plt.savefig("./plots/hierarchical_clustering_category.png", dpi=300)

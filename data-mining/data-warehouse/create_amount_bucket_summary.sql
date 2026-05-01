@@ -33,3 +33,7 @@ SELECT
 FROM public.transactions_detailed
 GROUP BY amount_range
 ORDER BY amount_range;
+
+ALTER TABLE public.fraud_category_monthly
+ADD CONSTRAINT pk_fraud_category_monthly
+PRIMARY KEY (month, category);

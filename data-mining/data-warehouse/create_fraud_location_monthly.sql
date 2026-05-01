@@ -41,3 +41,7 @@ ORDER BY
     month,
     state,
     city;
+
+ALTER TABLE public.fraud_location_monthly
+ADD CONSTRAINT pk_fraud_location_monthly
+PRIMARY KEY (month, state, city);

@@ -3,9 +3,13 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import silhouette_score
 from scipy.cluster.hierarchy import dendrogram, linkage
 import matplotlib.pyplot as plt
-from utils import supabase_client
+import os
+import sys
+PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+sys.path.insert(0, PROJECT_ROOT)
+from utils.supabase_client import supabase
 
-response = supabase_client.supabase.table("geo_bucket_summary").select("*").execute()
+response = supabase.table("geo_bucket_summary").select("*").execute()
 
 geo_bucket_summary = response.data
 
@@ -27,9 +31,9 @@ scaler = StandardScaler()
 X_scaled = scaler.fit_transform(features)
 
 
-# Create linkage matrix for dendrogram using single linkage
+# Create linkage matrix for dendrogram using ward linkage
 # =========================================================
-Z_single = linkage(X_scaled, method="single")
+Z = linkage(X_scaled, method="ward")
 
 location_labels = (
     df["geo_buckets"]
@@ -37,28 +41,12 @@ location_labels = (
 
 plt.figure(figsize=(12, 6))
 dendrogram(
-    Z_single,
+    Z,
     labels=location_labels,
     leaf_rotation=90
 )
-plt.title("Hierarchical Clustering of Fraud by Location - Single Linkage")
+plt.title("Hierarchical Clustering of Fraud by Location - Ward Linkage")
 plt.xlabel("Longitude, Latitude")
 plt.ylabel("Distance")
 plt.tight_layout()
-plt.show()
-
-# Create linkage matrix for dendrogram using complete linkage
-# =========================================================
-Z_complete = linkage(X_scaled, method="complete")
-
-plt.figure(figsize=(12, 6))
-dendrogram(
-    Z_complete,
-    labels=location_labels,
-    leaf_rotation=90
-)
-plt.title("Hierarchical Clustering of Fraud by Location - Complete Linkage")
-plt.xlabel("Longitude, Latitude")
-plt.ylabel("Distance")
-plt.tight_layout()
-plt.show()
+plt.savefig("./plots/hierarchical_clustering_location.png", dpi=300)

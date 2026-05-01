@@ -27,3 +27,6 @@ GROUP BY
     category
 ORDER BY
     fraud_rate DESC;
+
+ALTER TABLE public.fraud_category_summary
+ADD CONSTRAINT pk_fraud_category_summary PRIMARY KEY (category);

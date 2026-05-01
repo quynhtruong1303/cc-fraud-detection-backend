@@ -3,9 +3,14 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.cluster import DBSCAN
 from sklearn.decomposition import PCA
 import matplotlib.pyplot as plt
-from utils import supabase_client
+import os
+import sys
+PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+sys.path.insert(0, PROJECT_ROOT)
+from utils.supabase_client import supabase
 
-response = supabase_client.supabase.table("fraud_category_summary").select("*").execute()
+response = supabase.table("fraud_category_summary").select("*").execute()
+amount_bucket_summary = response.data
 
 fraud_category_summary = response.data
 
@@ -49,8 +54,6 @@ outliers = df[df["cluster"] == -1]
 print("\nOutliers:")
 print(outliers[["category", "fraud_rate", "fraud_amount"]])
 
-# Save clustered output
-df.to_csv("dbscan_fraud_category_clusters.csv", index=False)
 
 # Plot longitude/latitude clusters
 plt.figure(figsize=(8, 5))
@@ -67,4 +70,4 @@ plt.title("DBSCAN Clusters (Fraud by Category)")
 plt.xlabel("Fraud Rate")
 plt.ylabel("Fraud Amount")
 plt.colorbar(label="Cluster")
-plt.show()
+plt.savefig("./plots/dbscan-category.png", dpi=300)

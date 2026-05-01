@@ -3,6 +3,10 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.cluster import AgglomerativeClustering
 from scipy.cluster.hierarchy import dendrogram, linkage
 import matplotlib.pyplot as plt
+import sys
+import os
+PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+sys.path.insert(0, PROJECT_ROOT)
 from utils import supabase_client
 
 response = supabase_client.supabase.table("amount_bucket_summary").select("*").execute()
@@ -28,28 +32,15 @@ scaler = StandardScaler()
 X_scaled = scaler.fit_transform(features)
 
 # Create linkage matrix for dendrogram
-Z_single = linkage(X_scaled, method="single")
+Z = linkage(X_scaled, method="ward")
 
 plt.figure(figsize=(12, 6))
 dendrogram(
-    Z_single,
+    Z,
     labels=(df["amount_range"]).values,
     leaf_rotation=90
 )
-plt.title("Hierarchical Clustering of Fraud by Transaction Amount - Single")
+plt.title("Hierarchical Clustering of Fraud by Transaction Amount - Ward Linkage")
 plt.xlabel("Amount")
 plt.tight_layout()
-plt.show()
-
-Z_complete = linkage(X_scaled, method="complete")
-
-plt.figure(figsize=(12, 6))
-dendrogram(
-    Z_complete,
-    labels=(df["amount_range"]).values,
-    leaf_rotation=90
-)
-plt.title("Hierarchical Clustering of Fraud by Transaction Amount - Complete")
-plt.xlabel("Amount")
-plt.tight_layout()
-plt.show()
+plt.savefig("./plots/hierarchical_amount_clustering.png", dpi=300)

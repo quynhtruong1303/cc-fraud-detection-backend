@@ -38,3 +38,7 @@ SELECT
 FROM public.transactions_detailed
 GROUP BY geo_buckets
 ORDER BY geo_buckets;
+
+ALTER TABLE public.geo_bucket_summary
+ADD CONSTRAINT pk_geo_bucket_summary
+PRIMARY KEY (geo_buckets);
