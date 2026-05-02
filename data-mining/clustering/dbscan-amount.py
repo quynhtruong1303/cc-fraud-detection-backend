@@ -80,3 +80,16 @@ plt.ylabel("Fraud Amount")
 plt.colorbar(label="Cluster")
 plt.tight_layout()
 plt.savefig("./plots/dbscan-amount-bucket.png", dpi=300)
+
+rows = [
+    {
+        "dimension": "amount",
+        "label": row["amount_range"],
+        "cluster_assignment": int(row["cluster"]),
+        "fraud_rate": float(row["fraud_rate"]) if row["fraud_rate"] is not None else None,
+        "total_transactions": int(row["total_transactions"]),
+    }
+    for _, row in df.iterrows()
+]
+supabase.table("cluster_results").upsert(rows, on_conflict="dimension,label").execute()
+print("Cluster results written to Supabase.")
