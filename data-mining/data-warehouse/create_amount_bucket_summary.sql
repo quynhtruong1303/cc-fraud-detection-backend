@@ -4,10 +4,10 @@ CREATE TABLE public.amount_bucket_summary AS
 SELECT
     CASE
         WHEN amt < 100 THEN '0-100'
-        WHEN amt < 200 THEN '0-200'
-        WHEN amt < 300 THEN '0-300'
-        WHEN amt < 400 THEN '0-400'
-        WHEN amt < 500 THEN '0-500'
+        WHEN amt < 200 THEN '100-200'
+        WHEN amt < 300 THEN '200-300'
+        WHEN amt < 400 THEN '300-400'
+        WHEN amt < 500 THEN '400-500'
         WHEN amt < 1000 THEN '500-1000'
         WHEN amt < 1500 THEN '1000-1500'
         WHEN amt < 2000 THEN '1500-2000'
