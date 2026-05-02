@@ -16,6 +16,7 @@ SQL_FILES = [
     # results tables
     "create_cluster_results.sql",
     "create_fraud_summary.sql",
+    "create_lof_scores.sql",
     # fact tables
     "create_fraud_category_summary.sql",
     "create_fraud_location_summary.sql",
