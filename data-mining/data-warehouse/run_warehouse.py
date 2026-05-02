@@ -13,6 +13,9 @@ SQL_FILES = [
     "create_dim_category.sql",
     "create_dim_amount_bucket.sql",
     "create_dim_geography.sql",
+    # results tables
+    "create_cluster_results.sql",
+    "create_fraud_summary.sql",
     # fact tables
     "create_fraud_category_summary.sql",
     "create_fraud_location_summary.sql",
