@@ -34,6 +34,6 @@ FROM public.transactions_detailed
 GROUP BY amount_range
 ORDER BY amount_range;
 
-ALTER TABLE public.fraud_category_monthly
-ADD CONSTRAINT pk_fraud_category_monthly
-PRIMARY KEY (month, category);
+ALTER TABLE public.amount_bucket_summary
+ADD CONSTRAINT pk_amount_bucket_summary
+PRIMARY KEY (amount_range);
