@@ -39,5 +39,5 @@ ORDER BY
     month,
     category;
 
-ALTER TABLE public.fraud_category_summary
-ADD CONSTRAINT pk_fraud_category_summary PRIMARY KEY (category);
+ALTER TABLE public.fraud_category_monthly
+ADD CONSTRAINT pk_fraud_category_monthly PRIMARY KEY (month, category);
