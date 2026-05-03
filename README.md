@@ -5,8 +5,8 @@
 ```
 fraud-detection-backend/
   .env                  ← shared env file (single source of truth)
-  backend/              ← Express API (Quynh)
-  data-mining/          ← Clustering, LOF, and data warehouse (Jessica / Joey)
+  backend/              ← Express API 
+  data-mining/          ← Clustering, LOF, and data warehouse
 ```
 
 ---
