@@ -73,21 +73,29 @@ router.get('/flagged', async (_req, res) => {
   const { data: lofRows, error: lofError } = await supabase
     .from('lof_scores')
     .select('transaction_id, lof_score, is_anomaly')
-    .eq('is_anomaly', true);
+    .eq('is_anomaly', true)
+    .limit(10000);
 
   if (lofError) return res.status(500).json({ error: lofError.message });
   if (!lofRows.length) return res.json([]);
 
   const ids = lofRows.map(r => r.transaction_id);
-  const { data: txRows, error: txError } = await supabase
-    .from('transactions_detailed')
-    .select('*')
-    .in('trans_num', ids);
 
+  // chunk to avoid URL length limits on the .in() filter
+  const CHUNK = 200;
+  const chunks = [];
+  for (let i = 0; i < ids.length; i += CHUNK) chunks.push(ids.slice(i, i + CHUNK));
+
+  const chunkResults = await Promise.all(
+    chunks.map(chunk => supabase.from('transactions_detailed').select('*').in('trans_num', chunk))
+  );
+
+  const txError = chunkResults.find(r => r.error)?.error;
   if (txError) return res.status(500).json({ error: txError.message });
 
+  const txRows = chunkResults.flatMap(r => r.data ?? []);
   const lofMap = Object.fromEntries(lofRows.map(r => [r.transaction_id, r]));
-  const data = txRows.map(tx => ({ ...tx, ...lofMap[tx.trans_num] }));
+  const data = txRows.map(tx => ({ ...tx, ...lofMap[String(tx.trans_num)] }));
 
   res.json(data);
 });
