@@ -52,4 +52,14 @@ router.get('/clusters', async (req, res) => {
   res.json(data);
 });
 
+router.get('/double-flagged', async (_req, res) => {
+  const { data, error } = await supabase
+    .from('double_flagged')
+    .select('*')
+    .order('lof_score', { ascending: false });
+
+  if (error) return res.status(500).json({ error: error.message });
+  res.json(data);
+});
+
 module.exports = router;
