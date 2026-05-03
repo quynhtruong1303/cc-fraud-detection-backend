@@ -70,6 +70,8 @@ plt.ylabel("Latitude")
 plt.colorbar(label="Cluster")
 plt.savefig("./plots/dbscan-location.png", dpi=300)
 
+df_deduped = df.loc[df.groupby(["state", "city"])["total_transactions"].idxmax()]
+
 rows = [
     {
         "dimension": "location",
@@ -78,7 +80,7 @@ rows = [
         "fraud_rate": float(row["fraud_rate"]) if row["fraud_rate"] is not None else None,
         "total_transactions": int(row["total_transactions"]),
     }
-    for _, row in df.iterrows()
+    for _, row in df_deduped.iterrows()
 ]
 supabase.table("cluster_results").upsert(rows, on_conflict="dimension,label").execute()
 print("Cluster results written to Supabase.")
