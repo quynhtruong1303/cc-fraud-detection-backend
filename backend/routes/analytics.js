@@ -100,6 +100,16 @@ router.get('/flagged', async (_req, res) => {
   res.json(data);
 });
 
+router.get('/by-geo', async (_req, res) => {
+  const { data, error } = await supabase
+    .from('fraud_geo_summary')
+    .select('state, city, lat, long, total_transactions, fraud_transactions, fraud_rate')
+    .limit(10000);
+
+  if (error) return res.status(500).json({ error: error.message });
+  res.json(data);
+});
+
 router.get('/double-flagged', async (_req, res) => {
   const { data, error } = await supabase
     .from('double_flagged')
