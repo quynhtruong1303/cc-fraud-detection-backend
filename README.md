@@ -29,7 +29,11 @@ DATABASE_URL=postgresql://postgres:<password>@db.xkfmuohnstxgzfdkslog.supabase.c
 
 ## Backend (Express API)
 
-### Setup
+### Deployment
+- **Production:** https://cc-fraud-detection-backend.onrender.com
+- **Platform:** Render (Root Directory: `backend`, Build: `npm install`, Start: `node server.js`)
+
+### Local setup
 ```bash
 cd backend
 npm install
