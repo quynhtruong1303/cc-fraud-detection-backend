@@ -52,6 +52,46 @@ router.get('/clusters', async (req, res) => {
   res.json(data);
 });
 
+router.get('/by-amount', async (_req, res) => {
+  const [summaryRes, dimRes] = await Promise.all([
+    supabase.from('amount_bucket_summary').select('*'),
+    supabase.from('dim_amount_bucket').select('*'),
+  ]);
+
+  if (summaryRes.error) return res.status(500).json({ error: summaryRes.error.message });
+  if (dimRes.error) return res.status(500).json({ error: dimRes.error.message });
+
+  const dimMap = Object.fromEntries(dimRes.data.map(d => [d.amount_range, d]));
+  const data = summaryRes.data
+    .map(row => ({ ...row, ...dimMap[row.amount_range] }))
+    .sort((a, b) => (a.sort_order ?? 99) - (b.sort_order ?? 99));
+
+  res.json(data);
+});
+
+router.get('/flagged', async (_req, res) => {
+  const { data: lofRows, error: lofError } = await supabase
+    .from('lof_scores')
+    .select('transaction_id, lof_score, is_anomaly')
+    .eq('is_anomaly', true);
+
+  if (lofError) return res.status(500).json({ error: lofError.message });
+  if (!lofRows.length) return res.json([]);
+
+  const ids = lofRows.map(r => r.transaction_id);
+  const { data: txRows, error: txError } = await supabase
+    .from('transactions_detailed')
+    .select('*')
+    .in('trans_num', ids);
+
+  if (txError) return res.status(500).json({ error: txError.message });
+
+  const lofMap = Object.fromEntries(lofRows.map(r => [r.transaction_id, r]));
+  const data = txRows.map(tx => ({ ...tx, ...lofMap[tx.trans_num] }));
+
+  res.json(data);
+});
+
 router.get('/double-flagged', async (_req, res) => {
   const { data, error } = await supabase
     .from('double_flagged')
