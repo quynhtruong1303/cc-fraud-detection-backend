@@ -1,86 +1,142 @@
-# Data Mining — Getting Started
+# Data Mining
 
-This directory contains the data mining and clustering work for the fraud detection project.
+Clustering, anomaly detection, and data warehouse for the fraud detection project.
+
+---
+
+## Directory Structure
+
+```
+data-mining/
+  clustering/
+    dbscan-category.py              ← DBSCAN on fraud_category_summary → cluster_results
+    dbscan-location.py              ← DBSCAN on fraud_geo_summary → cluster_results
+    dbscan-amount.py                ← DBSCAN on amount_bucket_summary → cluster_results
+    hierarchical-clustering-*.py   ← Dendrograms (visual only, not written to Supabase)
+    plots/                          ← Saved PNG outputs
+
+  data-warehouse/
+    run_warehouse.py                ← Runs all SQL files in order against Supabase
+    create_dim_category.sql
+    create_dim_amount_bucket.sql
+    create_dim_geography.sql
+    create_cluster_results.sql
+    create_fraud_summary.sql
+    create_lof_scores.sql
+    create_fraud_category_summary.sql
+    create_fraud_location_summary.sql
+    create_fraud_geo_summary.sql
+    create_geo_bucket_summary.sql
+    create_amount_bucket_summary.sql
+    create_fraud_category_monthly.sql
+    create_fraud_location_monthly.sql
+
+  lof/
+    lof_baseline.py                 ← Baseline LOF model (trained on fraud_data.csv)
+    artifacts/                      ← Saved model + preprocessor
+
+  lof_recall_first/
+    lof_fraud_detection.py          ← Recall-first LOF model (primary)
+    lof_batch_score.py              ← Scores transactions_detailed → writes to lof_scores
+    artifacts/                      ← primary_lof_model.joblib + primary_preprocessor.joblib
+
+  utils/
+    supabase_client.py              ← Shared Supabase connection for all Python scripts
+
+  requirements.txt
+```
+
+---
 
 ## Setup
 
-### 1. Create your virtual environment (Optional)
-
-Virtual environment if you don't want to install the dependencies for this project globally (potential conflict, but not necessarily).
-
-```bash
-python -m venv venv
-source venv/bin/activate        # Mac/Linux
-```
-
-### 2. Install dependencies
+### 1. Install dependencies
 ```bash
 pip install -r requirements.txt
 ```
 
-### 3. Configure environment variables
-```bash
-cp .env.example .env
+### 2. Environment variables
+The `.env` file lives at the **repo root** (`fraud-detection-backend/.env`), not here. All scripts load it automatically — no setup needed beyond filling in your credentials there.
+
+Required variables:
 ```
-Fill in `.env` with the Supabase URL and service role key. 
-- **REQUREMENT**: Obtain Joey's Supabase invitation first.
-- Go to **Project Settings** -> **API Keys** -> **Legacy anon, service_role API keys** -> copy `service_role`.
+SUPABASE_URL=https://xkfmuohnstxgzfdkslog.supabase.co
+SUPABASE_SERVICE_KEY=your_service_role_key
+DATABASE_URL=postgresql://postgres:<password>@db.xkfmuohnstxgzfdkslog.supabase.co:5432/postgres
+```
+
+Obtain the `SUPABASE_SERVICE_KEY` from: **Supabase → Project Settings → API Keys → service_role**.
+Obtain the DB password from: **Supabase → Project Settings → Database → Connection string**.
 
 ---
 
-## EXAMPLE Directory Structure
+## Running the Pipeline
 
+### Step 1 — Rebuild all warehouse tables
+```bash
+cd data-mining
+python data-warehouse/run_warehouse.py
 ```
-data-mining/
-  notebooks/
-    01_explore_data.ipynb         ← load + inspect transactions_simple and transactions_detailed
-    02_normalize.ipynb            ← clean, scale, reconcile schemas across both tables
-    03_clustering.ipynb           ← run clustering algorithms (your choice of method)
-    04_warehouse.ipynb            ← write normalized + clustered results back to Supabase
-    05_dashboard_queries.ipynb    ← verify aggregated queries that Sybil's dashboard needs
-  utils/
-    supabase_client.py            ← Supabase connection, import this in each notebook
-  requirements.txt
-  .env.example
-  README.md
+
+Runs all 13 SQL files in order. Safe to re-run — each file starts with `DROP TABLE IF EXISTS`.
+
+### Step 2 — Populate cluster results
+```bash
+cd data-mining/clustering
+python dbscan-category.py
+python dbscan-location.py
+python dbscan-amount.py
 ```
+
+Each script reads from a Supabase summary table, runs DBSCAN, and upserts results into `cluster_results`.
+
+### Step 3 — Populate LOF scores
+```bash
+cd data-mining
+python lof_recall_first/lof_batch_score.py
+```
+
+Loads `transactions_detailed` from Supabase, runs the saved primary LOF model, writes one row per transaction to `lof_scores`.
 
 ---
 
 ## Database Tables
 
-### Raw tables (read-only)
+### Dimension tables (reference / lookup)
+| Table | PK | Description |
+|---|---|---|
+| `dim_category` | `category` | 14 merchant categories — display label, group, sort order |
+| `dim_amount_bucket` | `bucket_id` | 11 amount ranges — min/max, sort order, risk tier |
+| `dim_geography` | `(state, city)` | Cities derived from data — full state name, US Census region |
+
+### Results tables (written by scripts)
+| Table | PK | Written by |
+|---|---|---|
+| `cluster_results` | `id` | DBSCAN scripts — unique on `(dimension, label)` |
+| `fraud_summary` | `id` | `run_warehouse.py` — single KPI row |
+| `lof_scores` | `transaction_id` | `lof_batch_score.py` — one row per transaction |
+
+### Fact / aggregate tables (derived from transactions_detailed)
+| Table | PK | Description |
+|---|---|---|
+| `fraud_category_summary` | `category` | Fraud metrics by category |
+| `fraud_location_summary` | `(state, city)` | Fraud metrics by city/state |
+| `fraud_geo_summary` | `(state, city, lat, long)` | Coordinate-level rollup |
+| `geo_bucket_summary` | `geo_buckets` | 16 geographic grid regions |
+| `amount_bucket_summary` | `amount_range` | Fraud metrics per amount range |
+| `fraud_category_monthly` | `(month, category)` | Monthly time-series by category |
+| `fraud_location_monthly` | `(month, state, city)` | Monthly time-series by location |
+
+### Raw tables (read-only, do not modify)
 | Table | Description |
 |---|---|
-| `transactions_simple` | 100k rows, simple schema |
-| `transactions_detailed` | 14k rows, rich schema with geo, category, demographic data |
-
-### Warehouse tables (Example)
-| Table | Description |
-|---|---|
-| `transactions_normalized` | combined + cleaned data from both raw tables |
-| `cluster_results` | clustering output with cluster assignments |
-| `fraud_summary` | aggregated stats for the dashboard |
-
----
-
-## Connecting to Supabase in a Notebook
-
-```python
-import sys
-sys.path.append('..')
-
-from utils.supabase_client import supabase
-import pandas as pd
-
-df = pd.DataFrame(supabase.table("transactions_detailed").select("*").execute().data)
-print(df.shape)
-df.head()
-```
+| `transactions_simple` | 100k rows — simple schema |
+| `transactions_detailed` | 14k rows — full schema with geo, category, demographic data |
 
 ---
 
 ## Notes
-- Do not modify `transactions_simple` or `transactions_detailed` — these are raw historical data
-- Warehouse tables (`transactions_normalized`, `cluster_results`) are yours to define 
-- Cluster results will be consumed by Nha's Express API and displayed on our dashboard
+- Hierarchical clustering scripts produce dendrograms only — results are not written to Supabase
+- LOF transfer pipeline (`lof_recall_first`) was evaluated but cut — near-zero precision on external dataset
+- `cluster_results` location labels use `"state|city"` format (e.g. `"CA|Fresno"`); use `split_part` in SQL to join with `dim_geography`
+- sklearn version warning when loading LOF artifacts is expected and does not affect results
