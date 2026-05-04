@@ -1,8 +1,9 @@
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
-from sklearn.metrics import silhouette_score
+from sklearn.metrics import silhouette_score, silhouette_samples
 from scipy.cluster.hierarchy import dendrogram, linkage
 import matplotlib.pyplot as plt
+from scipy.cluster.hierarchy import fcluster
 import os
 import sys
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
@@ -49,4 +50,48 @@ plt.title("Hierarchical Clustering of Fraud by Location - Ward Linkage")
 plt.xlabel("Longitude, Latitude")
 plt.ylabel("Distance")
 plt.tight_layout()
-plt.savefig("./plots/hierarchical_clustering_location.png", dpi=300)
+plt.savefig("./plots/hierarchical_location_clustering.png", dpi=300)
+
+def plot_silhouette_with_clusters(points, labels):
+    # Overall score
+    overall_score = silhouette_score(points, labels)
+    print("Silhouette Score:", overall_score)
+
+    # Per-point scores
+    scores = silhouette_samples(points, labels)
+
+    unique_clusters = sorted(set(labels))
+    if -1 in unique_clusters:
+        unique_clusters.remove(-1)
+
+    plt.figure(figsize=(8, 6))
+    y_lower = 0
+
+    for cluster in unique_clusters:
+        cluster_scores = scores[labels == cluster]
+        cluster_scores.sort()
+
+        y_upper = y_lower + len(cluster_scores)
+
+        plt.barh(
+            range(y_lower, y_upper),
+            cluster_scores,
+            height=1.0,
+            label=f"Cluster {cluster}"
+        )
+
+        y_lower = y_upper + 2
+
+    plt.title(f"Silhouette Plot (Score = {overall_score:.3f})")
+    plt.xlabel("Silhouette Coefficient")
+    plt.ylabel("Samples")
+    plt.savefig("./plots/hierarchical_location_silhouette.png", dpi=300)
+
+# Create cluster labels from dendrogram
+cluster_labels = fcluster(Z, t=4, criterion='maxclust')
+
+# Compute silhouette score
+score = silhouette_score(X_scaled, cluster_labels)
+
+# Plot silhouette
+plot_silhouette_with_clusters(X_scaled, cluster_labels)
