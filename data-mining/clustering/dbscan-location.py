@@ -80,8 +80,6 @@ def plot_dbscan_silhouette(points, cluster_labels, sample_names, output_path, ti
     cluster_labels = np.array(cluster_labels)
     sample_names = np.array(sample_names)
 
-    # Silhouette score cannot be calculated if there is only one cluster.
-    # DBSCAN noise is labeled as -1, so we exclude noise from silhouette scoring.
     non_noise_mask = cluster_labels != -1
     clean_points = points[non_noise_mask]
     clean_labels = cluster_labels[non_noise_mask]
@@ -103,8 +101,9 @@ def plot_dbscan_silhouette(points, cluster_labels, sample_names, output_path, ti
     print(pd.Series(cluster_labels).value_counts().sort_index())
 
     unique_clusters = sorted(set(clean_labels))
+    n_samples = len(clean_points)
 
-    plt.figure(figsize=(10, 6))
+    fig, ax = plt.subplots(figsize=(18, max(12, n_samples * 0.22)))
     y_lower = 0
 
     for cluster in unique_clusters:
@@ -114,35 +113,52 @@ def plot_dbscan_silhouette(points, cluster_labels, sample_names, output_path, ti
 
         y_upper = y_lower + len(cluster_scores)
 
-        plt.barh(
+        ax.barh(
             range(y_lower, y_upper),
             [score for score, name in cluster_scores],
-            height=1.0,
+            height=0.85,
             label=f"Cluster {cluster}"
         )
 
-        for y_pos, (score, name) in zip(range(y_lower, y_upper), cluster_scores):
-            plt.text(score + 0.01, y_pos, str(name), va="center", fontsize=8)
+        # Label only the lowest and highest scorer in each cluster to avoid overlap
+        for idx, (y_pos, (score, name)) in enumerate(zip(range(y_lower, y_upper), cluster_scores)):
+            if idx == 0 or idx == len(cluster_scores) - 1:
+                ax.text(score + 0.01, y_pos, name, va="center", fontsize=7.5, clip_on=True)
 
-        y_lower = y_upper + 2
+        # Cluster centroid label on the y-axis
+        mid = (y_lower + y_upper - 1) / 2
+        ax.text(-0.02, mid, f"C{cluster}", ha="right", va="center", fontsize=7, fontweight="bold")
 
-    plt.axvline(overall_score, linestyle="--")
-    plt.title(f"{title} Silhouette Plot (Score = {overall_score:.3f})")
-    plt.xlabel("Silhouette Coefficient")
-    plt.ylabel("Samples")
-    plt.legend()
+        y_lower = y_upper + 3
+
+    ax.axvline(overall_score, linestyle="--", color="gray", linewidth=1)
+    ax.text(overall_score + 0.01, y_lower - 1, f"avg={overall_score:.3f}", fontsize=8, color="gray")
+
+    ax.set_title(f"{title} Silhouette Plot (Score = {overall_score:.3f})", fontsize=13, pad=12)
+    ax.set_xlabel("Silhouette Coefficient", fontsize=10)
+    ax.set_yticks([])
+    ax.set_xlim(-0.15, 1.05)
+
+    ax.legend(
+        loc="upper left",
+        bbox_to_anchor=(1.01, 1),
+        borderaxespad=0,
+        fontsize=7.5,
+        ncol=2,
+        title="Clusters",
+        title_fontsize=8,
+    )
+
     plt.tight_layout()
-    plt.savefig(output_path, dpi=300)
+    plt.savefig(output_path, dpi=150, bbox_inches="tight")
+    plt.close(fig)
 
     return overall_score
 
 
 dbscan = DBSCAN(eps=0.8, min_samples=2)
 cluster_labels = dbscan.fit_predict(X_scaled)
-df["location_label"] = (
-    "lat " + df["lat"].round(2).astype(str)
-    + ", long " + df["long"].round(2).astype(str)
-)
+df["location_label"] = df["city"] + ", " + df["state"]
 
 location_score = plot_dbscan_silhouette(
     X_scaled,
@@ -161,6 +177,7 @@ rows = [
         "cluster_assignment": int(row["cluster"]),
         "fraud_rate": float(row["fraud_rate"]) if row["fraud_rate"] is not None else None,
         "total_transactions": int(row["total_transactions"]),
+        "silhouette_score": float(location_score) if location_score is not None else None,
     }
     for _, row in df_deduped.iterrows()
 ]

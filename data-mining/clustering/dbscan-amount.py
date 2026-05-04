@@ -159,6 +159,7 @@ rows = [
         "cluster_assignment": int(row["cluster"]),
         "fraud_rate": float(row["fraud_rate"]) if row["fraud_rate"] is not None else None,
         "total_transactions": int(row["total_transactions"]),
+        "silhouette_score": float(amount_score) if amount_score is not None else None,
     }
     for _, row in df.iterrows()
 ]
